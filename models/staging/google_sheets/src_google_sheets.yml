@@ -1,0 +1,60 @@
+version: 2
+
+sources:
+
+  - name: google_sheets # Name of the source, this name will be used to reference the {{ source ('','') }} function.
+    description: >
+      Raw data demo from Budget.
+    schema: google_sheets # This is the schema our raw data lives in snowflake.
+    database: fivetran_agonzalez # This is the name of our database with RAW data.
+
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+
+    tables:
+
+      - name: budget
+        loaded_at_field: _fivetran_synced
+        description: >
+          Data about budget in demo.
+        columns:
+          - name: _row
+            description: >
+              Number of each row from google sheet.
+            tests:
+              - not_null
+              - unique
+          - name: product_id
+            description: >
+              UUID for each unique product on platform.
+            tests:
+              - not_null
+              - relationships:
+                    to: source('postgres_public','products')
+                    field: product_id  
+          - name: quantity
+            description: >
+              Number of units for each product and each month for products.
+            tests:
+              - not_null
+              - positive_values
+              - dbt_utils.expression_is_true:
+                    expression: "> 0"
+          - name: month
+            description: >
+              Each month for the budget > End of the month.
+            tests:
+              - not_null
+          - name: _fivetran_synced
+            description: >
+              Date on which data were uploaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz

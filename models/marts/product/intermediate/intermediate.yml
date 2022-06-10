@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: int_session_events_users
+    description: >
+      Intermediate model to have events aggregate by user and sessions.
+    columns:
+      - name: session_id
+        description: >
+          UUID of each browsing session on the platform which can contain many events.
+        tests:
+          - not_null
+      - name: created_at_utc
+        description: >
+          Timestamp of the event (UTC).
+        tests:
+          - not_null
+      - name: user_id
+        description: >
+          UUID of the user that this event is associated with.
+        tests:
+          - not_null
+      - name: page_view
+        description: >
+          Number of events of type page_view.
+        tests:
+          - not_null
+          - positive_values
+      - name: add_to_cart
+        description: >
+          add_to_cart
+        tests:
+          - not_null
+          - positive_values
+      - name: checkout
+        description: >
+          Number of events of type checkout.
+        tests:
+          - not_null
+          - positive_values
+      - name: package_shipped
+        description: >
+          Number of events of type package_shipped.
+        tests:
+          - not_null
+          - positive_values

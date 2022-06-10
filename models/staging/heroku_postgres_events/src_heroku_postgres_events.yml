@@ -1,0 +1,70 @@
+version: 2
+
+sources:
+
+  - name: heroku_postgres_events # name of the source 
+    description: >
+      Raw data for events demo from PostgreSQL Database.
+    schema: heroku_postgres_events # this is the schema our raw data lives in
+    database: fivetran_agonzalez # this is the name of our database
+
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+
+    tables:
+
+      - name: events
+        loaded_at_field: _fivetran_synced
+        description: >
+          Data about events in the platform of demo.
+        columns:
+          - name: event_id
+            description: >
+              UUID of each unique event on the platform.
+            tests:
+              - not_null
+              - unique
+          - name: session_id
+            description: >
+              UUID of each browsing session on the platform which can contain many events.
+            tests:
+              - not_null
+          - name: user_id
+            description: >
+              UUID of the user that this event is associated with.
+            tests:
+              - not_null
+          - name: page_url
+            description: >
+              URL that the event happened on.
+            tests:
+              - not_null
+          - name: created_at
+            description: >
+              Timestamp of the event (UTC).
+            tests:
+              - not_null
+          - name: event_type
+            description: >
+              Type of event.
+            tests:
+              - not_null
+          - name: order_id
+            description: >
+              If the event is specific to an order (mostly used for checkout).
+          - name: product_id
+            description: >
+              If the event is specific to a product.
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz

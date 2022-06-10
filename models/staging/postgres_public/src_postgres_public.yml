@@ -1,0 +1,308 @@
+version: 2
+
+sources:
+
+  - name: postgres_public # name of the source 
+    description: >
+      Raw data demo from PostgreSQL Database.
+    schema: postgres_public # this is the schema our raw data lives in
+    database: fivetran_agonzalez # this is the name of our database
+
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    freshness:
+      warn_after: {count: 24, period: hour}
+      error_after: {count: 48, period: hour}
+
+    tables:
+
+      - name: addresses
+        loaded_at_field: _fivetran_synced
+        description: >
+          Info about addresses for users and delivery orders.
+        columns:
+          - name: address_id
+            description: >
+              UUID for each unique address on platform.
+            tests:
+              - not_null
+              - unique
+          - name: address
+            description: >
+              The first few lines of the address.
+            tests:
+              - not_null
+          - name: zipcode
+            description: >
+              The zipcode of the address.
+            tests:
+              - not_null
+          - name: state
+            description: >
+              State this delivery address is based in.
+            tests:
+              - not_null
+          - name: country
+            description: >
+              Country this delivery address is based in.
+            tests:
+              - not_null
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+
+      - name: users
+        loaded_at_field: _fivetran_synced
+        description: >
+          Data about all users in demo.
+        columns:
+          - name: user_id
+            description: >
+              UUID for each unique user on platform.
+            tests:
+              - not_null
+              - unique
+          - name: first_name
+            description: >
+              First name of the user.
+            tests:
+              - not_null
+          - name: last_name
+            description: >
+              Last name of the user.
+            tests:
+              - not_null
+          - name: email
+            description: >
+              Email address of the user.
+            tests:
+              - not_null
+          - name: phone_number
+            description: >
+              Phone number of the user.
+            tests:
+              - not_null
+          - name: created_at
+            description: >
+              Timestamp the user was created (UTC).
+            tests:
+              - not_null
+          - name: updated_at
+            description: >
+              Timestamp the user was last updated (UTC).
+          - name: address_id
+            description: >
+              Default delivery address for the user.
+            tests:
+              - not_null
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+
+      - name: promos
+        loaded_at_field: _fivetran_synced
+        description: >
+          Info about promos like discount or status.
+        columns:
+          - name: promo_id
+            description: > 
+              Each unique promocode on platform.
+            tests:
+              - unique
+              - not_null
+          - name: discount
+            description: > 
+              Absolute dollar amount that is given off with the code.
+            tests:
+              - not_null
+              - positive_values
+          - name: status
+            description: > 
+              Is the promo code active or disabled.
+            tests:
+              - not_null
+              - accepted_values:
+                    values: ['inactive','active']
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+              
+      - name: products
+        loaded_at_field: _fivetran_synced
+        description: >
+          Info about products like name, price or inventory.
+        columns:
+          - name: product_id
+            description: > 
+              UUID for each unique product on platform.
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: > 
+              Name of the product.
+            tests:
+              - unique
+              - not_null
+          - name: price
+            description: > 
+              Price of the product.
+            tests:
+              - not_null
+              - positive_values
+          - name: inventory
+            description: > 
+              Amount of the inventory we have for this product.
+            tests:
+              - not_null
+              - positive_values
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+
+      - name: orders
+        loaded_at_field: _fivetran_synced
+        description: >
+          Data about all orders in demo.
+        columns:
+          - name: order_id
+            description: >
+              UUID for each unique order on platform.
+            tests:
+              - not_null
+              - unique
+          - name: user_id
+            description: >
+              UserId of the user that placed this order.
+            tests:
+              - not_null
+              - relationships:
+                    to: source('postgres_public','users')
+                    field: user_id
+          - name: promo_id
+            description: >
+              PromoId if any was used in the order.
+              - relationships:
+                    to: source('postgres_public','promos')
+                    field: promo_id
+          - name: address_id
+            description: >
+              Delivery address for this order.
+            tests:
+              - not_null
+              - relationships:
+                    to: source('postgres_public','addresses')
+                    field: address_id
+          - name: created_at
+            description: >
+              Timestamp when the order was created (UTC).
+            tests:
+              - not_null
+              - dbt_utils.expression_is_true:
+                  expression: "< delivered_at"
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+          - name: order_cost
+            description: >
+              Dollar about of the items in the order ($).
+            tests:
+              - not_null
+              - positive_values
+          - name: shipping_cost
+            description: >
+              Cost of shipping for the order ($).
+            tests:
+              - not_null
+              - positive_values  
+          - name: order_total
+            description: >
+              Total cost of the order including shipping ($).
+            tests:
+              - not_null
+              - positive_values
+          - name: tracking_id
+            description: >
+              Tracking number for the order/package.
+          - name: shipping_service
+            description: >
+              Company that was used for shipping.
+          - name: estimated_delivery_at
+            description: >
+              Estimated date of delivery (UTC).
+            tests:
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz   
+          - name: delivered_at
+            description: >
+              Actual timestamp of delivery (UTC).
+            tests:
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+          - name: status
+            description: >
+              description: "{{ doc('order_status') }}"
+            tests:
+              - not_null
+              - accepted_values:
+                    values: ['shipped','preparing','delivered']
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz 
+
+      - name: order_items
+        loaded_at_field: _fivetran_synced
+        description: >
+          Info about orders like product or quantity.
+        columns:
+          - name: order_id
+            description: > 
+              Compound Primary key for products order_id and product_id.
+            tests:
+              - not_null
+              - relationships:
+                    to: source('postgres_public','orders')
+                    field: order_id
+          - name: product_id
+            description: > 
+              Compound Primary key for products order_id and product_id.
+            tests:
+              - not_null
+              - relationships:
+                    to: source('postgres_public','products')
+                    field: product_id
+          - name: quantity
+            description: > 
+              Number of units of the product in this order.
+            tests:
+              - not_null
+              - positive_values
+          - name: _fivetran_synced
+            description: >
+              Date that the data was loaded.
+            tests:
+              - not_null
+              - dbt_expectations.expect_column_values_to_be_of_type:
+                  column_type: timestamp_tz

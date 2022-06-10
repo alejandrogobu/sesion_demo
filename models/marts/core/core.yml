@@ -1,0 +1,229 @@
+version: 2
+
+models:
+  - name: dim_addresses
+    description: >
+      Info about addresses for users and delivery orders.
+    columns:
+      - name: address_id
+        description: >
+          UUID for each unique address on platform.
+      - name: address
+        description: >
+          The first few lines of the address.
+      - name: zipcode
+        description: >
+          The zipcode of the address.
+      - name: state
+        description: >
+          State this delivery address is based in.
+      - name: country
+        description: >
+          Country this delivery address is based in.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+  - name: dim_users
+    description: >
+      Data about all users in demo.
+    columns:
+      - name: user_id
+        description: >
+          UUID for each unique user on platform.
+      - name: first_name
+        description: >
+          First name of the user.
+      - name: last_name
+        description: >
+          Last name of the user.
+      - name: email
+        description: >
+          Email address of the user.
+      - name: phone_number
+        description: >
+          Phone number of the user.
+      - name: created_at_utc
+        description: >
+          Timestamp the user was created (UTC).
+      - name: updated_at_utc
+        description: >
+          Timestamp the user was last updated (UTC).
+      - name: address_id
+        description: >
+          Default delivery address for the user.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+   
+  - name: dim_promos
+    description: >
+      Data about all products in demo.
+    columns:
+      - name: promo_id
+        description: >
+          Each unique promocode on platform (Hash).
+      - name: name_promo
+        description: >
+          Promocode on platform. 
+      - name: total_discount_usd
+        description: >
+          Absolute dollar amount that is given off with the code.
+      - name: status_promo
+        description: >
+          Is the promo code active or disabled.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+  - name: dim_products
+    description: >
+      Data about all products in demo.
+    columns:
+      - name: product_id
+        description: >
+          UUID for each unique product on platform.
+      - name: product_name
+        description: >
+          Name of the product.
+      - name: unit_price_usd
+        description: >
+          Price of the product.
+      - name: inventory
+        description: >
+          Amount of the inventory we have for this product.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+  - name: fct_orders
+    description: >
+      Data about all orders in demo.
+    columns:
+      - name: order_id
+        description: >
+          UUID for each unique order on platform.
+      - name: user_id
+        description: >
+          UserId of the user that placed this order.
+      - name: promo_id
+        description: >
+          PromoId if any was used in the order.
+      - name: address_id
+        description: >
+          Delivery address for this order.
+      - name: created_at_utc
+        description: >
+          Timestamp when the order was created (UTC).
+      - name: item_order_cost_usd
+        description: >
+          Dollar about of the items in the order ($).
+      - name: shipping_cost_usd
+        description: >
+          Cost of shipping for the order ($).
+      - name: total_order_cost_usd
+        description: >
+          Total cost of the order including shipping ($).
+      - name: tracking_id
+        description: >
+          Tracking number for the order/package.
+      - name: shipping_service
+        description: >
+          Company that was used for shipping.
+      - name: estimated_delivery_at_utc
+        description: >
+          Estimated date of delivery (UTC).
+      - name: delivered_at_utc
+        description: >
+          Actual timestamp of delivery (UTC).
+      - name: status_order
+        description: >
+          Status of the order.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+  - name: fct_events
+    description: >
+      Data about events in the platform of demo.
+    columns:
+      - name: event_id
+        description: >
+          UUID of each unique event on the platform.
+      - name: session_id
+        description: >
+          UUID of each browsing session on the platform which can contain many events.
+      - name: user_id
+        description: >
+          UUID of the user that this event is associated with.   
+      - name: page_url
+        description: >
+          URL that the event happened on.
+      - name: created_at_utc
+        description: >
+          Timestamp of the event (UTC).
+      - name: event_type
+        description: >
+          Type of event.
+      - name: order_id
+        description: >
+          If the event is specific to an order (mostly used for checkout).
+      - name: product_id
+        description: >
+          If the event is specific to a product.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+  - name: fct_budget
+    description: >
+      Data about events in the platform of demo.
+    columns:
+      - name: id
+        description: >
+         Number of each row from google sheet.
+      - name: product_id
+        description: >
+         UUID for each unique product on platform.          
+      - name: quantity
+        description: >
+          Number of units for each product and each month for products.
+      - name: month
+        description: >
+          Each month for the budget -> End of the month..
+      - name: date_load
+        description: >
+          Date that the data was loaded.
+
+
+  - name: fct_orders_products
+    description: >
+      Data about products on each order.
+    columns:
+      - name: order_id 
+        description: >
+          UUID for each unique order on platform.
+      - name: user_id
+        description: >
+          UserId of the user that placed this order.
+      - name: promo_id
+        description: >
+          PromoId if any was used in the order. 
+      - name: address_id
+        description: >
+          Delivery address for this order.
+      - name: product_id
+        description: >
+          ProductId of a single item in this order.
+      - name: created_at_utc
+        description: >
+          Timestamp when the order was created (UTC).
+      - name: quantity
+        description: >
+          Quantity of product in the order.
+      - name: status_order
+        description: >
+          Status of the order.
+      - name: date_load
+        description: >
+          Date that the data was loaded.
